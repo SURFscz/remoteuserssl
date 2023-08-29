@@ -1,0 +1,18 @@
+{
+  "name": "local/simplesamlphp-module-remoteuserssl",
+  "description": "The module is just getting result of the Basic authentication or SSL authentication done by NGINX web server.",
+  "type": "simplesamlphp-module",
+  "version": "1.0.0-dev",
+  "keywords": ["simplesamlphp", "remoteuserssl"],
+  "license": "BSD-2-Clause",
+  "authors": [
+    {
+      "name": "Martin van Es",
+      "email": "martin.vanes@surf.nl"
+    }
+  ],
+  "require": {
+    "simplesamlphp/simplesamlphp": ">2.0.0",
+    "simplesamlphp/composer-module-installer": "~1.0"
+  }
+}
