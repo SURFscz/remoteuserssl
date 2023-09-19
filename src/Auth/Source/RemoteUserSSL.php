@@ -82,6 +82,8 @@ class RemoteUserSSL extends Auth\Source
     $uid = str_replace("@", "_", $mail);
     $cn = $subject_dn_parsed['CN'][0];
     $cn_array = explode(" ", $cn);
+    $uid_hash = hash("sha256", $uid);
+    $subject_id = "$uid_hash@$sho";
 
     /* SURFsara to SURF migration prut */
     if ($uid=="behnaz.moradabadi_surf.nl") {
@@ -91,7 +93,7 @@ class RemoteUserSSL extends Auth\Source
         $attributes = array(
                'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
                'urn:mace:dir:attribute-def:uid' => [$uid],
-               'urn:oasis:names:tc:SAML:attribute:subject-id' => ["$uid@$sho"],
+               'urn:oasis:names:tc:SAML:attribute:subject-id' => [$subject_id],
                'urn:mace:dir:attribute-def:mail' => [$mail],
                'urn:mace:dir:attribute-def:cn' => [$cn],
                'urn:mace:dir:attribute-def:displayName' => [$cn],
