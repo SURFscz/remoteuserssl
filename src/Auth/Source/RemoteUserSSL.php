@@ -74,39 +74,50 @@ class RemoteUserSSL extends Auth\Source
     {
         assert(is_array($state));
 
-    /* The new NGINX way */
-    $subject_dn = $_SERVER['SSL_CLIENT_SUBJECT_DN'];
-    $subject_dn_parsed = $this->parseLdapDn($subject_dn);
-    $sho = "test-idp.lab.surf.nl";
-    $mail = $subject_dn_parsed['emailAddress'][0];
-    $uid = str_replace("@", "_", $mail);
-    $cn = $subject_dn_parsed['CN'][0];
-    $cn_array = explode(" ", $cn);
-    $uid_hash = hash("sha256", $uid);
-    $subject_id = "$uid_hash@$sho";
+        /* The new NGINX way */
+        $raw_cert = $_SERVER['SSL_CLIENT_RAW_CERT'];
+        $parsed_cert = openssl_x509_parse($raw_cert);
+        $sho = "test-idp.lab.surf.nl";
+        $mail = @$parsed_cert['subject']['emailAddress'];
+        if (!$mail) {
+                $san = @$parsed_cert['extensions']['subjectAltName'];
+                $san_array = array_map('trim', explode(",", $san));
+                foreach($san_array as $v) {
+                        $v_array = array_map('trim', explode(":", $v));
+                        Logger::info("remoteuserssl v_array: '$v_array[0]'");
+                        Logger::info("remoteuserssl v_array: '$v_array[1]'");
+                        if ($v_array[0] = 'email') {
+                                $mail = $v_array[1];
+                        }
+                }
+        }
+        $uid = str_replace("@", "_", $mail);
+        $uid_hash = hash("sha256", $uid);
+        $subject_id = "$uid_hash@$sho";
+        $cn = @$parsed_cert['subject']['CN'];
+        $cn_array = explode(" ", $cn);
+        $givenname = $cn_array[0];
+        $sn = implode(" ", array_splice($cn_array, 1));
 
-    /* SURFsara to SURF migration prut */
-    if ($uid=="behnaz.moradabadi_surf.nl") {
-        $uid="behnaz.moradabadi_surfsara.nl";
-    }
+        /* SURFsara to SURF migration prut */
+        if ($uid=="behnaz.moradabadi_surf.nl") {
+            $uid="behnaz.moradabadi_surfsara.nl";
+        }
 
         $attributes = array(
-               'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
-               'urn:mace:dir:attribute-def:uid' => [$uid],
-               'urn:oasis:names:tc:SAML:attribute:subject-id' => [$subject_id],
-               'urn:mace:dir:attribute-def:mail' => [$mail],
-               'urn:mace:dir:attribute-def:cn' => [$cn],
-               'urn:mace:dir:attribute-def:displayName' => [$cn],
-               'urn:mace:dir:attribute-def:givenName' => [$cn_array[0]],
-               'urn:mace:dir:attribute-def:sn' => [implode(" ", array_splice($cn_array, 1))],
-               'urn:mace:dir:attribute-def:eduPersonPrincipalName' => ["$uid@$sho"],
-               'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member","employee"],
-               'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho","employee@$sho"],
-    );
+            'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
+            'urn:mace:dir:attribute-def:uid' => [$uid],
+            'urn:oasis:names:tc:SAML:attribute:subject-id' => [$subject_id],
+            'urn:mace:dir:attribute-def:mail' => [$mail],
+            'urn:mace:dir:attribute-def:cn' => [$cn],
+            'urn:mace:dir:attribute-def:displayName' => [$cn],
+            'urn:mace:dir:attribute-def:givenName' => [$givenname],
+            'urn:mace:dir:attribute-def:sn' => [$sn],
+            'urn:mace:dir:attribute-def:eduPersonPrincipalName' => ["$uid@$sho"],
+            'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member","employee"],
+            'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho","employee@$sho"],
+        );
         $state['Attributes'] = $attributes;
-
-    Logger::info('remoteuserssl attributes: '.print_r($attributes,1));
-
         $this->authSuccesful($state);
 
         assert(false); // should never be reached
