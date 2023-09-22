@@ -99,11 +99,6 @@ class RemoteUserSSL extends Auth\Source
         $givenname = $cn_array[0];
         $sn = implode(" ", array_splice($cn_array, 1));
 
-        /* SURFsara to SURF migration prut */
-        if ($uid=="behnaz.moradabadi_surf.nl") {
-            $uid="behnaz.moradabadi_surfsara.nl";
-        }
-
         $attributes = array(
             'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
             'urn:mace:dir:attribute-def:uid' => [$uid],
