@@ -77,7 +77,7 @@ class RemoteUserSSL extends Auth\Source
         /* The new NGINX way */
         $raw_cert = $_SERVER['SSL_CLIENT_RAW_CERT'];
         $parsed_cert = openssl_x509_parse($raw_cert);
-        $sho = "test-idp.lab.surf.nl";
+        $sho = "surfstar-idp.lab.surf.nl";
         $mail = @$parsed_cert['subject']['emailAddress'];
         if (!$mail) {
                 $san = @$parsed_cert['extensions']['subjectAltName'];
