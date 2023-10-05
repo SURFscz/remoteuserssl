@@ -84,9 +84,7 @@ class RemoteUserSSL extends Auth\Source
                 $san_array = array_map('trim', explode(",", $san));
                 foreach($san_array as $v) {
                         $v_array = array_map('trim', explode(":", $v));
-                        Logger::info("remoteuserssl v_array: '$v_array[0]'");
-                        Logger::info("remoteuserssl v_array: '$v_array[1]'");
-                        if ($v_array[0] = 'email') {
+                        if ($v_array[0] == 'email') {
                                 $mail = $v_array[1];
                         }
                 }
