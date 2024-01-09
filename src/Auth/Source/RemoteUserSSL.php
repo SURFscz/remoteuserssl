@@ -97,6 +97,7 @@ class RemoteUserSSL extends Auth\Source
         # filter away all elements from $cn_array that contain a @ character
         # because the Geant Research and Education Trust CA generates CNs like "Pietje Puk piet001@surf.nl"
         $cn_array = array_filter($cn_array, function($v) { return strpos($v, '@') === false; });
+        $cn = implode(" ", $cn_array);
         $givenname = $cn_array[0];
         $sn = implode(" ", array_splice($cn_array, 1));
 
