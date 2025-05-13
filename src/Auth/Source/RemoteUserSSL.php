@@ -38,30 +38,6 @@ class RemoteUserSSL extends Auth\Source
         return;
     }
 
-    private function parseLdapDn($dn) {
-    $parsr=ldap_explode_dn($dn, 0);
-    $out = array();
-    foreach($parsr as $key=>$value){
-        if(FALSE !== strstr($value, '=')){
-        list($prefix,$data) = explode("=",$value);
-        print("$data\n");
-        $data = preg_replace_callback("/\\\\([0-9A-Fa-f]{2})/",
-            function($m) {
-            return chr(hexdec($m[0]));
-            },
-            $data
-        );
-        if(isset($current_prefix) && $prefix == $current_prefix){
-            $out[$prefix][] = $data;
-        } else {
-            $current_prefix = $prefix;
-            $out[$prefix][] = $data;
-        }
-        }
-    }
-    return $out;
-    }
-
     /**
      * Get SSL_CLIENT_SUBJECT_DN
      *
@@ -80,14 +56,14 @@ class RemoteUserSSL extends Auth\Source
         $sho = "surfstar-idp.lab.surf.nl";
         $mail = @$parsed_cert['subject']['emailAddress'];
         if (!$mail) {
-                $san = @$parsed_cert['extensions']['subjectAltName'];
-                $san_array = array_map('trim', explode(",", $san));
-                foreach($san_array as $v) {
-                        $v_array = array_map('trim', explode(":", $v));
-                        if ($v_array[0] == 'email') {
-                                $mail = $v_array[1];
-                        }
+            $san = @$parsed_cert['extensions']['subjectAltName'];
+            $san_array = array_map('trim', explode(",", $san));
+            foreach ($san_array as $v) {
+                $v_array = array_map('trim', explode(":", $v));
+                if ($v_array[0] == 'email') {
+                    $mail = $v_array[1];
                 }
+            }
         }
         $uid = str_replace("@", "_", $mail);
         $uid_hash = hash("sha256", $uid);
@@ -96,7 +72,9 @@ class RemoteUserSSL extends Auth\Source
         $cn_array = explode(" ", $cn);
         # filter away all elements from $cn_array that contain a @ character
         # because the Geant Research and Education Trust CA generates CNs like "Pietje Puk piet001@surf.nl"
-        $cn_array = array_filter($cn_array, function($v) { return strpos($v, '@') === false; });
+        $cn_array = array_filter($cn_array, function ($v) {
+            return strpos($v, '@') === false;
+        });
         $cn = implode(" ", $cn_array);
         $givenname = $cn_array[0];
         $sn = implode(" ", array_splice($cn_array, 1));
@@ -111,14 +89,13 @@ class RemoteUserSSL extends Auth\Source
             'urn:mace:dir:attribute-def:givenName' => [$givenname],
             'urn:mace:dir:attribute-def:sn' => [$sn],
             'urn:mace:dir:attribute-def:eduPersonPrincipalName' => ["$uid@$sho"],
-            'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member","employee"],
-            'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho","employee@$sho"],
+            'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member", "employee"],
+            'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho", "employee@$sho"],
         );
         $state['Attributes'] = $attributes;
         $this->authSuccesful($state);
 
         assert(false); // should never be reached
-        return;
     }
 
     /**
@@ -133,7 +110,6 @@ class RemoteUserSSL extends Auth\Source
         Auth\Source::completeAuth($state);
 
         assert(false); // should never be reached
-        return;
     }
 
     /**
@@ -157,5 +133,27 @@ class RemoteUserSSL extends Auth\Source
         $t->show();
 
         exit();
+    }
+
+    private function parseLdapDn($dn)
+    {
+        $parsr = ldap_explode_dn($dn, 0);
+        $out = array();
+        foreach ($parsr as $key => $value) {
+            if (FALSE !== strstr($value, '=')) {
+                list($prefix, $data) = explode("=", $value);
+                print("$data\n");
+                $data = preg_replace_callback("/\\\\([0-9A-Fa-f]{2})/", function ($m) {
+                    return chr(hexdec($m[0]));
+                }, $data);
+                if (isset($current_prefix) && $prefix == $current_prefix) {
+                    $out[$prefix][] = $data;
+                } else {
+                    $current_prefix = $prefix;
+                    $out[$prefix][] = $data;
+                }
+            }
+        }
+        return $out;
     }
 }

@@ -13,6 +13,7 @@
   ],
   "require": {
     "simplesamlphp/simplesamlphp": ">2.0.0",
-    "simplesamlphp/composer-module-installer": "~1.0"
+    "simplesamlphp/composer-module-installer": "~1.0",
+      "ext-openssl": "*"
   }
 }
