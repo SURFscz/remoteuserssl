@@ -50,10 +50,14 @@ class RemoteUserSSL extends Auth\Source
     {
         assert(is_array($state));
 
+        $sho = "surfstar-idp.lab.surf.nl";
+
         /* The new NGINX way */
         $raw_cert = $_SERVER['SSL_CLIENT_RAW_CERT'];
         $parsed_cert = openssl_x509_parse($raw_cert);
-        $sho = "surfstar-idp.lab.surf.nl";
+        Logger::debug("Found subject from x509 certificate: " . json_encode(@$parsed_cert['subject']));
+
+        /* find email */
         $mail = @$parsed_cert['subject']['emailAddress'];
         if (!$mail) {
             $san = @$parsed_cert['extensions']['subjectAltName'];
@@ -65,19 +69,34 @@ class RemoteUserSSL extends Auth\Source
                 }
             }
         }
+        if (!is_string($mail) or $mail == '') {
+            Logger::error("Counldn't parse email from certificate.  Subject: " . json_encode(@$parsed_cert['subject']));
+            throw new Error\Error('WRONGUSERPASS');
+        }
+
+        /* parse identifiers from email */
         $uid = str_replace("@", "_", $mail);
         $uid_hash = hash("sha256", $uid);
         $subject_id = "$uid_hash@$sho";
+
+        /* find name attributes */
         $cn = @$parsed_cert['subject']['CN'];
-        $cn_array = explode(" ", $cn);
-        # filter away all elements from $cn_array that contain a @ character
-        # because the Geant Research and Education Trust CA generates CNs like "Pietje Puk piet001@surf.nl"
-        $cn_array = array_filter($cn_array, function ($v) {
-            return strpos($v, '@') === false;
-        });
-        $cn = implode(" ", $cn_array);
-        $givenname = $cn_array[0];
-        $sn = implode(" ", array_splice($cn_array, 1));
+        if (is_string($cn) and strlen($cn) > 0) {
+            $cn_array = explode(" ", $cn);
+            # filter away all elements from $cn_array that contain a @ character
+            # because the Geant Research and Education Trust CA generates CNs like "Pietje Puk piet001@surf.nl"
+            $cn_array = array_filter($cn_array, function ($v) {
+                return strpos($v, '@') === false;
+            });
+        }
+        if (!isset($cn_array) or count($cn_array) == 0) {
+            Logger::debug('RemoteUserSSL: no name found in cert, parsing from email');
+            $mail_local = explode("@", $mail)[0];
+            $cn_array = explode(".", $mail_local);
+            foreach ($cn_array as &$n) {
+                $n = ucfirst($n);
+            }
+        }
 
         $attributes = array(
             'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
