@@ -113,7 +113,7 @@ class RemoteUserSSL extends Auth\Source
         );
         # log the attributes
         Logger::debug('RemoteUserSSL: attributes: ' . json_encode($attributes));
-        Logger::stats('User \'' . $subject_id . '\' successfully authenticated from ' . $_SERVER['REMOTE_ADDR']);
+        Logger::stats('User \'' . $uid . '\' successfully authenticated from ' . $_SERVER['REMOTE_ADDR']);
 
         $state['Attributes'] = $attributes;
         $this->authSuccesful($state);
