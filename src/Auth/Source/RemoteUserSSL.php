@@ -98,15 +98,19 @@ class RemoteUserSSL extends Auth\Source
             }
         }
 
+        $displayname = implode(" ", $cn_array);
+        $givenname = $cn_array[0];
+        $surname = implode(" ", array_splice($cn_array, 1));
+
         $attributes = array(
             'urn:mace:terena.org:attribute-def:schacHomeOrganization' => [$sho],
             'urn:mace:dir:attribute-def:uid' => [$uid],
             'urn:oasis:names:tc:SAML:attribute:subject-id' => [$subject_id],
             'urn:mace:dir:attribute-def:mail' => [$mail],
-            'urn:mace:dir:attribute-def:cn' => [$cn],
-            'urn:mace:dir:attribute-def:displayName' => [$cn],
+            'urn:mace:dir:attribute-def:cn' => [$displayname],
+            'urn:mace:dir:attribute-def:displayName' => [$displayname],
             'urn:mace:dir:attribute-def:givenName' => [$givenname],
-            'urn:mace:dir:attribute-def:sn' => [$sn],
+            'urn:mace:dir:attribute-def:sn' => [$surname],
             'urn:mace:dir:attribute-def:eduPersonPrincipalName' => ["$uid@$sho"],
             'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member", "employee"],
             'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho", "employee@$sho"],
