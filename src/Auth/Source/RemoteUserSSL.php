@@ -92,8 +92,9 @@ class RemoteUserSSL extends Auth\Source
             'urn:mace:dir:attribute-def:eduPersonAffiliation' => ["member", "employee"],
             'urn:mace:dir:attribute-def:eduPersonScopedAffiliation' => ["member@$sho", "employee@$sho"],
         );
-        # log the attributes to stderr
+        # log the attributes
         Logger::debug('RemoteUserSSL: attributes: ' . json_encode($attributes));
+        Logger::stats('User \'' . $subject_id . '\' successfully authenticated from ' . $_SERVER['REMOTE_ADDR']);
 
         $state['Attributes'] = $attributes;
         $this->authSuccesful($state);
