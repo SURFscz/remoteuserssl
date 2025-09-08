@@ -9,6 +9,7 @@ use SimpleSAML\XHTML\Template;
 use SimpleSAML\Utils\HTTP;
 use SimpleSAML\Error\ErrorCodes;
 use SimpleSAML\Logger;
+use SimpleSAML\Error;
 
 /**
  * Getting user's identity either from SSL_CLIENT_SUBJECT_DN. The code of the module has been inspired
@@ -69,6 +70,21 @@ class RemoteUserSSL extends Auth\Source
                 }
             }
         }
+        /* even stupider certificate without proper email (damn you, IGTF!) */
+        if (!$mail) {
+            Logger::debug("RemoteUserSSL: no email found in standard locations, trying to parse from CN");
+            if (isset($parsed_cert['subject']['CN'])) {
+                $cn = $parsed_cert['subject']['CN'];
+                $cn_parts = explode(' ', $cn);
+                $last_part = end($cn_parts);
+                if (filter_var($last_part, FILTER_VALIDATE_EMAIL)) {
+                    $mail = $last_part;
+                    Logger::debug("RemoteUserSSL: found email/(eppn?) in CN: " . $mail);
+                }
+            }
+        }
+
+        /* no mail found */
         if (!is_string($mail) or $mail == '') {
             Logger::error("Counldn't parse email from certificate.  Subject: " . json_encode(@$parsed_cert['subject']));
             throw new Error\Error('WRONGUSERPASS');
